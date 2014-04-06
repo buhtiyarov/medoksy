@@ -1,0 +1,46 @@
+<project name="Oksy">
+
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="build/classes"/>
+    <javac srcdir="src" destdir="build/classes">
+      <classpath>
+        <fileset dir="lib">
+          <include name="*.jar"/>
+        </fileset>
+        <pathelement location="/usr/share/java/junit4.jar" />
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+    <mkdir dir="build/jar"/>
+    <jar destfile="build/jar/Application.jar" basedir="build/classes">
+      <zipgroupfileset dir="lib" includes="*.jar"/>
+      <manifest>
+        <attribute name="Main-Class" value="Application"/>
+      </manifest>
+      <fileset dir="resources" />
+    </jar>
+  </target>
+
+  <target name="run" depends="jar">
+    <java jar="build/jar/Application.jar" fork="true"/>
+  </target>
+
+  <target name="test" depends="compile">
+    <java classname="org.junit.runner.JUnitCore">
+      <classpath>
+        <pathelement location="build/classes"/>
+        <fileset dir="lib">
+          <include name="*.jar"/>
+        </fileset>
+        <pathelement location="/usr/share/java/junit4.jar"/>
+      </classpath>
+      <arg value="tests.ModelTest"/>
+    </java>
+  </target>
+</project>
