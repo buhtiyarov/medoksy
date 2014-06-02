@@ -32,6 +32,12 @@ public class EditConstraintsFactory {
         return c;
     }
 
+    public static GridBagConstraints createRichEditorConstraint(int gridx, int gridy) {
+        GridBagConstraints c = createTextAreaConstraint(gridx, gridy);
+        c.gridwidth = 2;
+        return c;
+    }
+
     public static GridBagConstraints createButtonConstraint(int gridx, int gridy, int gridwidth) {
         GridBagConstraints c = createDefaultConstraint(gridx, gridy);
         c.gridwidth = gridwidth;

@@ -20,26 +20,37 @@ import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.print.PrinterException;
+import javax.print.PrintServiceLookup;
+import javax.print.PrintService;
+import javax.print.DocPrintJob;
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.SimpleDoc;
+import javax.print.PrintException;
+import javax.print.ServiceUI;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.HashPrintRequestAttributeSet;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.io.StringReader;
 import view.EditConstraintsFactory;
 import view.Constants;
+import view.IRichEditor;
+import util.PluginFactory;
 import model.Visit;
 import model.Diagnosis;
+import util.Printer;
 
 public class Edit {
     private JComponent root;
     private JComboBox<String> diagnosis;
-    private JTextArea description;
+    private IRichEditor description;
     private Visit visit;
     private ArrayList<Diagnosis> diagnoses;
     private EditHandler handler;
-    private JButton insertTemplate;
 
     public Edit() {
         root = new JPanel(new GridBagLayout());
-        root.setOpaque(true);
-        root.setBorder(BorderFactory.createTitledBorder(Constants.VISIT_EDIT_TITLE));
 
         root.add(new JLabel(Constants.VISIT_DIAGNOSIS_LABEL),
                  EditConstraintsFactory.createLabelConstraint(0, 0));
@@ -47,71 +58,27 @@ public class Edit {
                  EditConstraintsFactory.createTextFieldConstraint(1, 0));
         diagnosis.addActionListener(createDiagnosisActionListener());
 
-        root.add(new JLabel(Constants.VISIT_DESCRIPTION_LABEL),
-                 EditConstraintsFactory.createLabelConstraint(0, 1));
-        root.add(new JScrollPane(description = new JTextArea(5, 20)),
-                 EditConstraintsFactory.createTextAreaConstraint(1, 1));
-        description.getDocument().addDocumentListener(createDescriptionDocumentListener());
+        description = PluginFactory.createRichEditor();
+        root.add(description.getRoot(), EditConstraintsFactory.createRichEditorConstraint(0, 1));
 
         JPanel buttons = new JPanel(new FlowLayout());
         GridBagConstraints c = EditConstraintsFactory.createButtonConstraint(0, 2, 2);
         c.insets = new Insets(0, 0, 0, 0);
         root.add(buttons, c);
 
-        insertTemplate = new JButton("Вставить шаблон");
-        insertTemplate.setEnabled(false);
-        insertTemplate.addActionListener(createInsertTemplateActionListener());
-        buttons.add(insertTemplate);
-
         JButton print = new JButton("Распечатать описание");
         print.addActionListener(createPrintActionListener());
         buttons.add(print);
     }
 
-    protected DocumentListener createDescriptionDocumentListener() {
-        return new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {}
-            public void insertUpdate(DocumentEvent e) {
-                if (visit != null) {
-                    visit.setDescription(description.getText());
-                    fireChanged();
-                }
-            }
-            public void removeUpdate(DocumentEvent e) {
-                if (visit != null) {
-                    visit.setDescription(description.getText());
-                    fireChanged();
-                }
-            }
-        };
-    }
-
     protected ActionListener createDiagnosisActionListener() {
         return new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (diagnosis.getSelectedIndex() == 0) {
-                    insertTemplate.setEnabled(false);
-                } else {
-                    insertTemplate.setEnabled(true);
-                }
-                if (diagnoses != null && visit != null && diagnosis.getSelectedIndex() > 0) {
+                if (diagnoses != null && diagnosis.getSelectedIndex() > 0) {
                     Diagnosis d = diagnoses.get(diagnosis.getSelectedIndex() - 1);
-                    visit.setDiagnosis(d);
-                    fireChanged();
-                }
-            }
-        };
-    }
-
-    protected ActionListener createInsertTemplateActionListener() {
-        return new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (diagnoses != null && visit != null && diagnosis.getSelectedIndex() > 0 &&
-                    JOptionPane.showConfirmDialog(null, "Вставить шаблон?") == JOptionPane.YES_OPTION) {
-                    Diagnosis d = diagnoses.get(diagnosis.getSelectedIndex() - 1);
-                    description.setText(d.getTemplate());
-                    visit.setDescription(d.getTemplate());
-                    fireChanged();
+                    if (description.getText().replaceAll("<[^>]+>", "").isEmpty()) {
+                        description.setText(d.getTemplate());
+                    }
                 }
             }
         };
@@ -120,11 +87,7 @@ public class Edit {
     protected ActionListener createPrintActionListener() {
         return new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                try {
-                    description.print();
-                } catch (PrinterException exception) {
-                    JOptionPane.showMessageDialog(getRoot(), "Не получилось распечатать документ", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                }
+                Printer.printHTML(description.getText());
             }
         };
     }
@@ -163,5 +126,15 @@ public class Edit {
 
     public void setHandler(EditHandler handler) {
         this.handler = handler;
+    }
+
+    public void commit() {
+        if (visit != null) {
+            if (diagnoses != null && diagnosis.getSelectedIndex() > 0) {
+                Diagnosis d = diagnoses.get(diagnosis.getSelectedIndex() - 1);
+                visit.setDiagnosis(d);
+            }
+            visit.setDescription(description.getText());
+        }
     }
 }

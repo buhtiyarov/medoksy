@@ -192,17 +192,25 @@ public class Application {
     }
 
     private static void updateClients() {
-        try {
-            clientsList.setClients(mapperFactory.getClientMapper().search(clientsSearchParams));
-        } catch (SQLException e) {}
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    clientsList.setClients(mapperFactory.getClientMapper().search(clientsSearchParams));
+                } catch (SQLException e) {}
+            }
+        });
     }
 
     private static void updateVisits() {
-        try {
-            visitsList.setVisits(mapperFactory.getVisitMapper().search(visitsSearchParams));
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    visitsList.setVisits(mapperFactory.getVisitMapper().search(visitsSearchParams));
+                } catch (SQLException e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        });
     }
 
     private static void updateDiagnoses() {

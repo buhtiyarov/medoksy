@@ -11,22 +11,26 @@ import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
 import javax.swing.JFrame;
 import javax.swing.JDialog;
+import javax.swing.JTabbedPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowAdapter;
 import java.awt.GridBagLayout;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
 import java.util.ArrayList;
 import model.Client;
 import model.Visit;
 import model.Diagnosis;
+import model.Image;
 import view.EditConstraintsFactory;
 import view.Constants;
-import view.IRichEditor;
-import util.PluginFactory;
 
 public class Edit {
     private JComponent root;
-    private JDialog frame;
+    private JFrame frame;
     private EditHandler handler;
     private Client client;
     private Visit visit;
@@ -34,39 +38,55 @@ public class Edit {
     private JTextField address;
     private JTextField birthday;
     private JTextField phone;
-    private IRichEditor notes;
+    private JTextArea notes;
+    private JTabbedPane visitTabs;
     private view.client.visit.List visitList;
     private view.client.visit.Edit visitEdit;
+    private view.attachment.List attachemntList;
 
     public Edit() {
         root = buildUI();
     }
 
     public Edit(JFrame parent) {
-        frame = new JDialog(parent, Constants.CLIENT_EDIT_TITLE);
+        frame = new JFrame();
         frame.getContentPane().add(root = buildUI());
         frame.pack();
         frame.setLocationRelativeTo(parent);
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                if (handler != null && client != null) {
+                    client.setName(name.getText());
+                    client.setAddress(address.getText());
+                    client.setBirthday(birthday.getText());
+                    client.setPhone(phone.getText());
+                    client.setNotes(notes.getText());
+                    visitEdit.commit();
+                    handler.submit(client);
+                }
+            }
+        });
     }
 
     protected JComponent buildUI() {
         JComponent root = new JPanel(new GridBagLayout());
         root.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        root.setPreferredSize(new Dimension(700, 400));
+        root.setPreferredSize(new Dimension(1024, 500));
 
         root.add(new JLabel(Constants.CLIENT_NAME_LABEL),
                  EditConstraintsFactory.createLabelConstraint(0, 0));
         root.add(name = new JTextField(20),
                  EditConstraintsFactory.createTextFieldConstraint(1, 0));
 
-        root.add(new JLabel(Constants.CLIENT_ADDRESS_LABEL),
+        root.add(new JLabel(Constants.CLIENT_BIRTHDAY_LABEL),
                  EditConstraintsFactory.createLabelConstraint(0, 1));
-        root.add(address = new JTextField(20),
+        root.add(birthday = new JTextField(20),
                  EditConstraintsFactory.createTextFieldConstraint(1, 1));
 
-        root.add(new JLabel(Constants.CLIENT_BIRTHDAY_LABEL),
+        root.add(new JLabel(Constants.CLIENT_ADDRESS_LABEL),
                  EditConstraintsFactory.createLabelConstraint(0, 2));
-        root.add(birthday = new JTextField(20),
+        root.add(address = new JTextField(20),
                  EditConstraintsFactory.createTextFieldConstraint(1, 2));
 
         root.add(new JLabel(Constants.CLIENT_PHONE_LABEL),
@@ -76,40 +96,26 @@ public class Edit {
 
         root.add(new JLabel(Constants.CLIENT_NOTES_LABEL),
                  EditConstraintsFactory.createLabelConstraint(0, 4));
-        notes = PluginFactory.createRichEditor();
-        root.add(notes.getRoot(), EditConstraintsFactory.createTextAreaConstraint(1, 4));
+        root.add(new JScrollPane(notes = new JTextArea()),
+                 EditConstraintsFactory.createTextAreaConstraint(1, 4));
 
         visitList = new view.client.visit.List();
         visitList.setHandler(createVisitListHandler());
         root.add(visitList.getRoot(),
                  EditConstraintsFactory.createComponentConstraint(0, 5, 2, 1));
 
+        visitTabs = new JTabbedPane();
+        root.add(visitTabs, EditConstraintsFactory.createComponentConstraint(2, 0, 2, 6));
+
         visitEdit = new view.client.visit.Edit();
         visitEdit.setHandler(createVisitEditHandler());
-        root.add(visitEdit.getRoot(),
-                 EditConstraintsFactory.createComponentConstraint(2, 0, 2, 6));
-        visitEdit.getRoot().setVisible(false);
+        visitTabs.add("Визит", visitEdit.getRoot());
 
-        JButton submit = new JButton(Constants.SAVE_BUTTON);
-        submit.addActionListener(createSubmitActionListener());
-        root.add(submit, EditConstraintsFactory.createButtonConstraint(0, 6, 4));
+        attachmentList = new view.attachment.List();
+        // attachmentList.setHandler(createImageListHandler());
+        visitTabs.add("Документы", attachmentList.getRoot());
 
         return root;
-    }
-
-    protected ActionListener createSubmitActionListener() {
-        return new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (handler != null && client != null) {
-                    client.setName(name.getText());
-                    client.setAddress(address.getText());
-                    client.setBirthday(birthday.getText());
-                    client.setPhone(phone.getText());
-                    client.setNotes(notes.getText());
-                    handler.submit(client);
-                }
-            }
-        };
     }
 
     protected view.client.visit.ListHandler createVisitListHandler() {
@@ -137,6 +143,15 @@ public class Edit {
         };
     }
 
+    protected view.image.ListHandler createImageListHandler() {
+        return new view.image.ListHandler() {
+            public void add() {}
+            public void remove(Image image) {}
+            public void select(Image image) {}
+            public void deselect() {}
+        };
+    }
+
     public JComponent getRoot() {
         return root;
     }
@@ -161,12 +176,11 @@ public class Edit {
         this.visit = visit;
         visitList.selectVisit(visit);
         visitEdit.setVisit(visit);
-        visitEdit.getRoot().setVisible(true);
+        // imageList.setImages(visit.getImages());
         return this;
     }
 
     public Edit deselectVisit() {
-        visitEdit.getRoot().setVisible(false);
         return this;
     }
 

@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import model.Visit;
 import model.Client;
+import model.Image;
 import model.Diagnosis;
 import model.ValueHolder;
 import model.ValueLoader;
@@ -75,7 +76,25 @@ public class VisitMapper extends AbstractMapper {
         if (diagnosis != null) {
             visit.setDiagnosis(diagnosis);
         }
+        visit.setImages(new ValueHolder(new ImagesLoader(id)));
         return visit;
+    }
+
+    private void persistImages(Visit visit) throws SQLException {
+        // TODO: load previous imageIds and compare to new, clear removed images from db
+        PreparedStatement stmt = getConnection().prepareStatement("DELETE FROM visitImage WHERE visitId = ?");
+        stmt.setInt(1, visit.getId());
+        stmt.executeUpdate();
+
+        Iterator<Image> iterator = visit.getImages().iterator();
+        while (iterator.hasNext()) {
+            Image image = iterator.next();
+            getMapperFactory().getImageMapper().persist(image);
+            stmt = getConnection().prepareStatement("INSERT INTO visitImage (visitId, imageId) VALUES (?, ?)");
+            stmt.setInt(1, visit.getId());
+            stmt.setInt(2, image.getId());
+            stmt.executeUpdate();
+        }
     }
 
     private void fillStatement(PreparedStatement stmt, Visit visit) throws SQLException {
@@ -90,6 +109,7 @@ public class VisitMapper extends AbstractMapper {
         fillStatement(stmt, visit);
         stmt.executeUpdate();
         visit.setId(getGeneratedId(stmt));
+        persistImages(visit);
     }
 
     public void update(Visit visit) throws SQLException {
@@ -97,6 +117,7 @@ public class VisitMapper extends AbstractMapper {
         fillStatement(stmt, visit);
         stmt.setInt(5, visit.getId());
         stmt.executeUpdate();
+        persistImages(visit);
     }
 
     public void persist(Visit visit) throws SQLException {
@@ -172,5 +193,22 @@ public class VisitMapper extends AbstractMapper {
         }
 
         return result;
+    }
+
+    public class ImagesLoader implements ValueLoader {
+        private int id;
+
+        public ImagesLoader(int id) {
+            this.id = id;
+        }
+
+        public Object load() {
+            try {
+                return getMapperFactory().getImageMapper().findAllByVisit(id);
+            } catch (SQLException e) {
+
+            }
+            return null;
+        }
     }
 }

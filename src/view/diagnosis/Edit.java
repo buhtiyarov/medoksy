@@ -13,19 +13,24 @@ import javax.swing.JDialog;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowAdapter;
 import java.awt.GridBagLayout;
 import java.awt.Dimension;
 
 import model.Diagnosis;
 
 import view.EditConstraintsFactory;
+import view.IRichEditor;
+import util.PluginFactory;
 
 public class Edit {
     private JComponent root;
-    private JDialog frame;
+    private JFrame frame;
     private EditHandler handler;
     private JTextField name;
-    private JTextArea template;
+    private IRichEditor template;
     private Diagnosis diagnosis;
 
     public Edit() {
@@ -34,26 +39,13 @@ public class Edit {
 
     public Edit(JFrame parent) {
         buildUI();
-        frame = new JDialog(parent, "Edit diagnosis");
+        frame = new JFrame();
         frame.getContentPane().add(root);
         frame.pack();
         frame.setLocationRelativeTo(parent);
-    }
 
-    private void buildUI() {
-        root = new JPanel(new GridBagLayout());
-        root.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        root.setPreferredSize(new Dimension(700, 400));
-
-        root.add(new JLabel("Диагноз"), EditConstraintsFactory.createLabelConstraint(0, 0));
-        root.add(name = new JTextField(20), EditConstraintsFactory.createTextFieldConstraint(1, 0));
-
-        root.add(new JLabel("Шаблон"), EditConstraintsFactory.createLabelConstraint(0, 1));
-        root.add(new JScrollPane(template = new JTextArea(5, 20)), EditConstraintsFactory.createTextAreaConstraint(1, 1));
-
-        JButton submit = new JButton("Сохранить");
-        submit.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
                 if (handler != null && diagnosis != null) {
                     diagnosis.setName(name.getText());
                     diagnosis.setTemplate(template.getText());
@@ -61,7 +53,18 @@ public class Edit {
                 }
             }
         });
-        root.add(submit, EditConstraintsFactory.createButtonConstraint(0, 2));
+    }
+
+    private void buildUI() {
+        root = new JPanel(new GridBagLayout());
+        root.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        root.setPreferredSize(new Dimension(1024, 500));
+
+        root.add(new JLabel("Диагноз"), EditConstraintsFactory.createLabelConstraint(0, 0));
+        root.add(name = new JTextField(20), EditConstraintsFactory.createTextFieldConstraint(1, 0));
+
+        template = PluginFactory.createRichEditor();
+        root.add(template.getRoot(), EditConstraintsFactory.createRichEditorConstraint(0, 1));
     }
 
     public Edit setDiagnosis(Diagnosis diagnosis) {

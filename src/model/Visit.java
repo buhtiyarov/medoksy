@@ -1,6 +1,7 @@
 package model;
 
 import java.util.Date;
+import java.util.ArrayList;
 
 public class Visit {
     private int id = 0;
@@ -8,6 +9,7 @@ public class Visit {
     private Diagnosis diagnosis;
     private String description = "";
     private Date created = new Date();
+    private ValueHolder images;
 
     public void setId(int value) {
         id = value;
@@ -42,5 +44,27 @@ public class Visit {
     }
     public Date getCreated() {
         return created;
+    }
+
+    protected ValueHolder getImagesHolder() {
+        if (images == null) {
+            images = new ValueHolder();
+        }
+        if (images.getValue() == null) {
+            images.setValue(new ArrayList<Image>());
+        }
+        return images;
+    }
+
+    public void setImages(ArrayList<Image> images) {
+        getImagesHolder().setValue(images);
+    }
+
+    public void setImages(ValueHolder value) {
+        images = value;
+    }
+
+    public ArrayList<Image> getImages() {
+        return (ArrayList<Image>) getImagesHolder().getValue();
     }
 }

@@ -21,4 +21,8 @@ public class ValueHolder {
     public void setValue(Object value) {
         this.value = value;
     }
+
+    public void resetValue() {
+        this.value = null;
+    }
 }

@@ -7,6 +7,7 @@ public class MapperFactory {
     private ClientMapper clientMapper;
     private VisitMapper visitMapper;
     private DiagnosisMapper diagnosisMapper;
+    private ImageMapper imageMapper;
 
     public MapperFactory(Connection dbh) {
         this.dbh = dbh;
@@ -37,5 +38,14 @@ public class MapperFactory {
             diagnosisMapper.setMapperFactory(this);
         }
         return diagnosisMapper;
+    }
+
+    public ImageMapper getImageMapper() {
+        if (imageMapper == null) {
+            imageMapper = new ImageMapper();
+            imageMapper.setConnection(dbh);
+            imageMapper.setMapperFactory(this);
+        }
+        return imageMapper;
     }
 }

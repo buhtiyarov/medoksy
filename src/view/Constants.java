@@ -20,5 +20,10 @@ public class Constants {
 
     public static final String DIAGNOSIS_LIST_TITLE = "Диагнозы";
 
+    public static final String IMAGE_NAME_LABEL = "Описание";
+    public static final String IMAGE_SIZE_LABEL = "Размер";
+
+    public static final String ATTACHMENT_NAME_LABEL = "Описание";
+
     public static final String SAVE_BUTTON = "Сохранить";
 }

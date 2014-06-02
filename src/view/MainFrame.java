@@ -18,6 +18,7 @@ public class MainFrame {
         frame.setPreferredSize(new Dimension(700, 400));
         tabs = new JTabbedPane();
         frame.getContentPane().add(tabs);
+        createMemoryUsageTimer();
     }
 
     public void addComponent(String title, JComponent component) {

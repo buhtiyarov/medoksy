@@ -19,7 +19,11 @@
   <target name="jar" depends="compile">
     <mkdir dir="build/jar"/>
     <jar destfile="build/jar/Application.jar" basedir="build/classes">
-      <zipgroupfileset dir="lib" includes="*.jar"/>
+      <zipgroupfileset dir="lib" includes="*.jar" excludes="novaworx*,jtidy*,sam.jar,qz-print.jar"/>
+      <zipfileset src="lib/novaworx-syntax-0.0.7.jar" excludes="META-INF/NB*"/>
+      <zipfileset src="lib/jtidy-8.0.jar" excludes="META-INF/NB*"/>
+      <zipfileset src="lib/sam.jar" excludes="META-INF/NB*"/>
+      <zipfileset src="lib/qz-print.jar" excludes="META-INF/JZEBRA*"/>
       <manifest>
         <attribute name="Main-Class" value="Application"/>
       </manifest>
